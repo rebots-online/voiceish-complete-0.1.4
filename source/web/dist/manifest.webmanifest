@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "Voiceish \u2014 SIM messages",
+  "short_name": "Voiceish",
+  "description": "Your phone's SMS, with room to breathe.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#040f1b",
+  "theme_color": "#040f1b",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

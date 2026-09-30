@@ -1,0 +1,59 @@
+plugins { id 'com.android.application' }
+// Credentials stay in the private Admin-Manual checkout, outside this project.
+def signingPropertiesFile = new File(System.getenv('VOICEISH_KEYSTORE_PROPERTIES') ?:
+    "${System.getenv('ADMIN_MANUAL_ROOT') ?: '/home/robin/Admin-Manual'}/CREDENTIALS/PlayStore/keystore.properties").absoluteFile
+def signingProperties = new Properties()
+if (signingPropertiesFile.isFile()) {
+    signingPropertiesFile.withInputStream { signingProperties.load(it) }
+}
+def signingValue = { String envName, String propertyName ->
+    System.getenv(envName) ?: signingProperties.getProperty(propertyName)
+}
+def sharedKeyPath = signingValue('VOICEISH_KEYSTORE', 'storeFile')
+def sharedKeyFile = sharedKeyPath ? new File(sharedKeyPath) : null
+if (sharedKeyFile != null && !sharedKeyFile.isAbsolute()) {
+    sharedKeyFile = new File(signingPropertiesFile.parentFile, sharedKeyPath)
+}
+def sharedAlias = signingValue('VOICEISH_KEY_ALIAS', 'keyAlias')
+def sharedStorePassword = signingValue('VOICEISH_STORE_PASS', 'storePassword')
+def sharedKeyPassword = signingValue('VOICEISH_KEY_PASS', 'keyPassword') ?: sharedStorePassword
+
+android {
+    namespace 'com.voiceish.sim'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.voiceish.sim'
+        minSdk 26
+        targetSdk 35
+        versionCode 5
+        versionName '0.1.4'
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    signingConfigs {
+        organizational {
+            storeFile sharedKeyFile
+            storePassword sharedStorePassword
+            keyAlias sharedAlias
+            keyPassword sharedKeyPassword
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.organizational
+        }
+    }
+}
+// Defer validation so Android Studio can sync without access to private credentials.
+tasks.register('validateOrganizationalSigning') {
+    doLast {
+        if (!sharedKeyFile?.isFile() || !sharedAlias || !sharedStorePassword || !sharedKeyPassword) {
+            throw new GradleException('Shared signing settings missing. Set ADMIN_MANUAL_ROOT or VOICEISH_KEYSTORE_PROPERTIES and VOICEISH_KEYSTORE; see docs/BUILD.md. No replacement key will be generated.')
+        }
+    }
+}
+tasks.configureEach {
+    if (name == 'preReleaseBuild' || name == 'validateSigningRelease') {
+        dependsOn tasks.named('validateOrganizationalSigning')
+    }
+}

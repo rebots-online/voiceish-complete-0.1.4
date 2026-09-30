@@ -1,0 +1,84 @@
+<!doctype html>
+<!-- Adapted from Voice-ish 0.3.0, Copyright (c) 2026 Robin. See LICENSE. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Voice-ish SIM</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main id="app" class="app">
+      <section id="loadingView" class="center-view"><div class="spinner" aria-label="Loading"></div></section>
+      <section id="setupView" class="setup-view hidden">
+        <div class="setup-mark">V</div>
+        <h1>Voice-ish <span class="sim-word">SIM</span></h1>
+        <p class="lede">Your phone’s texts. A little closer to your keyboard.</p>
+        <div class="pairing-steps">Open Voice-ish SIM on your Android phone, start the bridge, then copy its pairing text. Keep both devices on the same Wi-Fi.</div>
+        <form id="connectForm" class="stack">
+          <label for="pairingInput">Pairing text from your phone</label>
+          <textarea id="pairingInput" rows="4" required spellcheck="false" autocomplete="off" placeholder='{"v":1,"url":"http://192.168.1.10:8765","key":"…","device":"Phone"}'></textarea>
+          <button id="connectButton" class="primary-button" type="submit">Connect my phone</button>
+        </form>
+        <p class="security-note">The pairing text is your private key. Messages are encrypted between this browser and your phone. The key and drafts stay in this Chrome profile.</p>
+        <div id="setupError" class="error-box hidden" role="alert"></div>
+        <small class="setup-footnote">Primary SIM · SMS · No VoIP.ms account needed</small>
+      </section>
+      <section id="messengerView" class="messenger hidden">
+        <header class="topbar">
+          <div class="brand"><span>V</span> Voice-ish <small>SIM</small></div>
+          <div class="top-actions">
+            <span id="connectionBadge" class="connection-badge" role="status">Connecting…</span>
+            <button id="openTabButton" class="icon-button" type="button" title="Open in a full tab" aria-label="Open in a full tab">↗</button>
+            <button id="syncButton" class="icon-button" type="button" title="Refresh" aria-label="Refresh">↻</button>
+            <button id="settingsButton" class="icon-button" type="button" title="Settings" aria-label="Settings">⚙</button>
+          </div>
+        </header>
+        <div id="connectionNotice" class="connection-notice hidden" role="status"></div>
+        <div class="workspace">
+          <aside class="threads-pane">
+            <button id="newMessageButton" class="new-message-button" type="button">＋ New message</button>
+            <label class="search-label"><span class="sr-only">Search conversations</span><input id="searchInput" type="search" placeholder="Search number or message" /></label>
+            <div id="threadList" class="thread-list" aria-label="Conversations"></div>
+            <div id="syncStatus" class="sync-status" role="status">Connecting to phone…</div>
+          </aside>
+          <section id="emptyConversation" class="conversation-empty">
+            <div class="empty-bubble">•••</div><h2>Pick a conversation</h2>
+            <p>Read and send texts through your phone’s primary SMS SIM.</p>
+          </section>
+          <section id="conversationView" class="conversation hidden">
+            <header class="conversation-header"><div><strong id="contactHeading"></strong><span id="simHeading" class="did-chip">Primary SMS SIM</span></div><small>Replies use this SIM</small></header>
+            <div id="messageList" class="message-list" aria-label="Messages"></div>
+            <form id="composerForm" class="composer">
+              <div id="attemptNotice" class="attempt-notice hidden" role="status"></div>
+              <button id="composeAgainButton" class="compose-again hidden" type="button">I checked my phone — compose again</button>
+              <div class="compose-row"><label class="sr-only" for="messageInput">Message</label><textarea id="messageInput" rows="1" maxlength="2000" placeholder="Type a text message"></textarea><button id="sendButton" class="send-button" type="submit" title="Send SMS" aria-label="Send SMS">➤</button></div>
+              <div class="compose-meta"><span>SMS · primary SIM</span><span>Enter sends · Shift+Enter newline</span><span id="characterCount">0 / 2000</span></div>
+              <div id="composerStatus" class="composer-status hidden" role="status"></div>
+            </form>
+          </section>
+        </div>
+      </section>
+      <div id="newMessageModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="newMessageTitle">
+        <form id="newMessageForm" class="modal-card">
+          <button class="modal-close" data-close="newMessageModal" type="button" aria-label="Close">×</button><h2 id="newMessageTitle">New message</h2>
+          <label>To<input id="newContactInput" type="tel" required placeholder="+16135550123" autocomplete="off" /></label>
+          <p id="newRouteLabel" class="route-warning">Sends from your phone’s primary SMS SIM.</p>
+          <button class="primary-button" type="submit">Open conversation</button><div id="newMessageError" class="error-box hidden" role="alert"></div>
+        </form>
+      </div>
+      <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <form id="settingsForm" class="modal-card settings-card">
+          <button class="modal-close" data-close="settingsModal" type="button" aria-label="Close">×</button><h2 id="settingsTitle">Your phone</h2>
+          <p id="accountLabel" class="account-label"></p>
+          <label>Phone address<input id="endpointInput" type="url" required spellcheck="false" placeholder="http://192.168.1.10:8765" /></label>
+          <p class="route-warning">If Wi-Fi gives your phone a new address, copy its current address here. To change SIMs, change Android’s default SMS SIM, restart the phone bridge, then forget and pair this browser again. That clears existing drafts.</p>
+          <p class="settings-detail">Refreshes every 5 seconds while this window is open. The latest 300 primary-SIM messages are loaded into memory. Chrome does not retain your inbox.</p>
+          <div class="settings-actions"><button id="disconnectButton" class="danger-button" type="button">Forget phone & erase drafts</button><button id="saveSettingsButton" class="primary-button" type="submit">Save address</button></div>
+          <div id="settingsError" class="error-box hidden" role="alert"></div>
+        </form>
+      </div>
+    </main>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

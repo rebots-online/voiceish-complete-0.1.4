@@ -1,0 +1,19 @@
+# Voiceish SIM protocol v1
+
+Phone hosts port 8765 on the local network. The desktop extension makes POST /v1 requests; there is no hosted relay. Android 8+ (API 26), target 35. The app uses the remoteMessaging foreground service type on Android 14+.
+
+Pairing text copied from phone: JSON `{ "v":1, "url":"http://192.168.1.10:8765", "key":"<standard base64 of 32 random bytes>", "device":"Phone" }`. Key never travels unencrypted over HTTP. No analytics, external assets, or content scripts.
+
+Wire envelope, both directions: `{ "v":1, "iv":"<base64 12 random bytes>", "data":"<base64 AES-256-GCM ciphertext with 128-bit tag appended>" }`. UTF-8 plaintext JSON. AAD is literal UTF-8 `voiceish-sim:v1:request` for requests and `voiceish-sim:v1:response` for responses. Use new random IV every message.
+
+Request plaintext: `{ "id":"<UUID>", "ts":<milliseconds UTC>, "action":"status|messages|send", "params":{} }`. Reject timestamps outside +/- 90 seconds and reused request IDs (retain for at least 180 seconds). Return HTTP 400/401/413 on malformed or unauthenticated envelopes. Otherwise return encrypted response `{ "id":"<same request UUID>", "ok":true, "data":{} }` or `{ "id":"<same request UUID>", "ok":false, "error":{"code":"...","message":"..."} }`. Browser checks response id.
+
+Actions:
+
+- `status`: data `{ "version":"0.1.4", "device":"...", "sim":{"id":1,"label":"Primary SMS SIM","ready":true}, "permissions":{"readSms":true,"sendSms":true,"phoneState":true} }`.
+- `messages`: params `{ "limit":300 }`; data `{ "messages":[{"id":"sms:42","address":"+15551234567","body":"Hello","date":1700000000000,"type":"in|out","status":"received|sent|failed|pending","subscriptionId":1}], "sends":[{"id":"<sendId>","to":"+15551234567","body":"Hello","date":1700000000000,"status":"sending|sent|failed|unknown","subscriptionId":1,"error":"optional"}] }`. Message list newest-first, limit capped at 500, filter provider by pinned subscription; no SMS provider writes. Sends is an independent persistent receipt list, capped to most recent 100 in response. Extension reconciles receipts with provider messages using address/body/date; does not permanently cache full inbox.
+- `send`: params `{ "sendId":"<UUID distinct from request ID>", "to":"+15551234567", "body":"Hello", "subscriptionId":1 }`; response data `{ "sendId":"...", "status":"sending|sent|failed|unknown" }`. Persist sendId atomically BEFORE invoking SmsManager. Duplicate identical sendId returns previous status, never transmits twice. Same ID with different contents errors. Validate destination and nonempty body, max 2000 UTF-16 code units, use divideMessage and sent callbacks for each segment. Never report sent until all parts succeed. No automatic retransmission after timeout. Preserve uncertain sends as unknown, with explicit check-inbox instruction.
+
+SIM selection: resolve Android default SMS subscription after phone-state permission is granted. Pin this subscription when bridge starts. Show it in Android and extension. No silent SIM fallback: inactive/default-changed/mismatched subscription must produce a clear error. Restart bridge on phone to select a changed default. Only primary/default SMS SIM exposed in v1. Permission denial is a visible state.
+
+Server limits: 64 KiB HTTP request maximum, bounded clients/executor, socket timeout, no request-body logging. Accept POST only at /v1; permit OPTIONS preflight without exposing content, including private-network preflight. Network listener accepts private/local peers only. Regenerate key revokes paired browser and stops bridge. Android backup disabled; browser key in storage.local, not sync; forget clears pairing and local drafts. HTTP transport exposes traffic timing, while authenticated application encryption protects message content and integrity. Treat pairing text as a password.

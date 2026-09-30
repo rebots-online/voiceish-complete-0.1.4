@@ -1,0 +1,12 @@
+{
+  "name": "voiceish-sim-verification",
+  "private": true,
+  "version": "0.1.4",
+  "type": "module",
+  "scripts": {
+    "test": "node --test extension/tests/*.test.js && node tests/crypto-interop.mjs && node tests/popup-integration.mjs"
+  },
+  "devDependencies": {
+    "linkedom": "0.18.13"
+  }
+}
