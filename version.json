@@ -1,9 +1,9 @@
 {
-  "version": "2.2.09665",
-  "versionBase": "2.2",
+  "version": "2.3.09665",
+  "versionBase": "2.3",
   "buildNumber": "09665",
-  "versionCode": 200002,
-  "buildDate": "2026-11-13T09:25:20-05:00",
+  "versionCode": 200003,
+  "buildDate": "2026-11-13T09:25:22-05:00",
   "productName": "Voiceish",
   "internalName": "voiceish",
   "packageName": "com.voiceish.sim"
